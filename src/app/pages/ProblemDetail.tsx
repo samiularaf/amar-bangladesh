@@ -193,8 +193,7 @@ export default function ProblemDetail() {
         </div>
 
         {/* Admin Note */}
-        {(problem.adminNote || canEdit) && (
-          <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-600 flex items-center gap-2">
                 <MessageSquare size={14} />
@@ -255,7 +254,6 @@ export default function ProblemDetail() {
               )
             )}
           </div>
-        )}
 
         {/* Upvote */}
         <div className="p-6">
