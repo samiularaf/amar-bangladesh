@@ -114,15 +114,14 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Points Guide */}
+      {/* Point balance guide */}
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-        <p className="text-amber-800 font-semibold text-sm mb-2">💡 পয়েন্ট অর্জনের উপায়</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <p className="text-amber-800 font-semibold text-sm mb-2">💡 পয়েন্ট ব্যালেন্সের নিয়ম</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {[
             { action: 'সমস্যা জানালে', pts: '+১০' },
             { action: 'সমস্যা সমাধান হলে', pts: '+৫০' },
-            { action: 'কোর্সে ভর্তি', pts: '+৫' },
-            { action: 'কোর্স সম্পন্ন', pts: '+২০' },
+            { action: 'কোর্সে ভর্তি হলে মূল্য কাটা হবে; সম্পন্ন হলে নির্ধারিত পুরস্কার ফেরত পাবেন', pts: 'কোর্সভেদে' },
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-2 bg-white rounded-xl p-2">
               <span className="text-green-600 font-bold text-sm">{item.pts}</span>

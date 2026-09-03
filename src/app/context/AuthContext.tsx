@@ -7,7 +7,6 @@ export interface User {
   email: string;
   role: 'user' | 'admin';
   points: number;
-  lifetimePoints: number;
   division: string;
   district: string;
   phone: string;

@@ -8,7 +8,6 @@ import SubmitProblem from './pages/SubmitProblem';
 import Problems from './pages/Problems';
 import ProblemDetail from './pages/ProblemDetail';
 import Courses from './pages/Courses';
-import CourseDetail from './pages/CourseDetail';
 import Leaderboard from './pages/Leaderboard';
 import AdminPanel from './pages/AdminPanel';
 import NotFound from './pages/NotFound';
@@ -49,7 +48,6 @@ export const router = createBrowserRouter([
       { path: 'problems', element: <Problems /> },
       { path: 'problems/:id', element: <ProblemDetail /> },
       { path: 'courses', element: <Courses /> },
-      { path: 'courses/:id', element: <CourseDetail /> },
       { path: 'leaderboard', element: <Leaderboard /> },
       { path: 'admin', element: <AdminOnly /> },
     ],

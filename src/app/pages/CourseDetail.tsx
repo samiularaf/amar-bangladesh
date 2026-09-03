@@ -1,71 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { ArrowLeft, BookOpen, CheckCircle, Clock, Play, Pause, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../api';
 
 const difficultyLabel: Record<string, string> = { Beginner: 'সহজ', Intermediate: 'মাঝারি', Advanced: 'উন্নত' };
-const formatTime = (seconds: number) => `${Math.floor(seconds / 60)} মিনিট ${Math.floor(seconds % 60)} সেকেন্ড`;
+const formatTime = (seconds: number) => `${Math.floor(seconds / 3600)} ঘন্টা ${Math.floor(seconds % 3600 / 60)} মিনিট`;
 
 export default function CourseDetail() {
-  const { id } = useParams<{ id: string }>();
-  const { user, refreshUser } = useAuth();
-  const navigate = useNavigate();
-  const [course, setCourse] = useState<any>(null);
-  const [progress, setProgress] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [enrolling, setEnrolling] = useState(false);
-  const [message, setMessage] = useState('');
-  const lastSaved = useRef(0);
-
+  const { id } = useParams<{ id: string }>(); const { user, refreshUser } = useAuth();
+  const [course, setCourse] = useState<any>(null); const [progress, setProgress] = useState(0); const [playing, setPlaying] = useState(false); const [loading, setLoading] = useState(true); const [enrolling, setEnrolling] = useState(false); const [message, setMessage] = useState(''); const lastSaved = useRef(0);
   useEffect(() => { api.getCourse(id!).then(c => { setCourse(c); setProgress(c.progressSeconds || 0); }).catch(e => setMessage(e.message)).finally(() => setLoading(false)); }, [id]);
-  useEffect(() => {
-    if (!playing || !course?.enrolled) return;
-    const timer = window.setInterval(() => setProgress(value => Math.min(value + 1, (course.durationMinutes || 120) * 60)), 1000);
-    return () => window.clearInterval(timer);
-  }, [playing, course]);
-  useEffect(() => {
-    if (!course?.enrolled || progress === lastSaved.current || progress % 15 !== 0) return;
-    lastSaved.current = progress;
-    api.saveCourseProgress(course.id, progress).then((enrollment: any) => { if (enrollment.completed) setPlaying(false); }).catch(e => setMessage(e.message));
-  }, [progress, course]);
-
+  useEffect(() => { if (!playing || !course?.enrolled) return; const timer = window.setInterval(() => setProgress(v => Math.min(v + 1, (course.durationMinutes || 120) * 60)), 1000); return () => window.clearInterval(timer); }, [playing, course]);
+  useEffect(() => { if (!course?.enrolled || progress === lastSaved.current || progress % 15) return; lastSaved.current = progress; api.saveCourseProgress(course.id, progress).then((e: any) => { if (e.completed) setPlaying(false); }).catch(e => setMessage(e.message)); }, [progress, course]);
   if (loading) return <div className="h-64 flex items-center justify-center text-[#006A4E]">লোড হচ্ছে...</div>;
   if (!course) return <div className="max-w-3xl mx-auto py-12 text-center text-red-600">{message || 'কোর্স পাওয়া যায়নি'}</div>;
-  const total = (course.durationMinutes || 120) * 60;
-  const percent = Math.min(100, Math.round(progress / total * 100));
-  const completed = course.completed || progress >= total;
-
-  const enroll = async () => {
-    if (!window.confirm(`এই কোর্সে ভর্তি হতে ${course.enrollmentCost} পয়েন্ট কাটা হবে। আপনি কি নিশ্চিত?`)) return;
-    setEnrolling(true); setMessage('');
-    try { await api.enrollCourse(course.id); await refreshUser(); const updated = await api.getCourse(course.id); setCourse(updated); setProgress(updated.progressSeconds || 0); }
-    catch (e: any) { setMessage(e.message || 'ভর্তি সম্ভব হয়নি'); }
-    finally { setEnrolling(false); }
-  };
-  const togglePlayer = async () => {
-    if (completed) return;
-    if (playing) { await api.saveCourseProgress(course.id, progress); lastSaved.current = progress; }
-    setPlaying(!playing);
-  };
-
-  return <div className="max-w-3xl mx-auto pb-24 lg:pb-8">
-    <Link to="/courses" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#006A4E] mb-5"><ArrowLeft size={16}/> কোর্সসমূহে ফিরে যান</Link>
-    {message && <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">{message}</div>}
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="p-5 sm:p-7 bg-gradient-to-br from-[#006A4E] to-[#004d38] text-white">
-        <div className="flex items-center gap-2 text-white/80 text-sm mb-3"><BookOpen size={16}/> {difficultyLabel[course.difficulty] || course.difficulty} • {course.lessons}টি পাঠ</div>
-        <h1 className="text-2xl font-bold">{course.title}</h1>
-        <p className="text-white/80 text-sm mt-3 leading-relaxed">{course.description}</p>
-        <div className="flex gap-4 mt-4 text-sm"><span className="flex items-center gap-1"><Clock size={15}/>{course.durationMinutes || 120} মিনিট</span><span>মূল্য: {course.enrollmentCost} পয়েন্ট</span></div>
-      </div>
-      <div className="p-5 sm:p-7">
-        <h2 className="font-bold text-gray-800">কোর্স ম্যাটেরিয়াল</h2>
-        <div className="mt-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center"><BookOpen className="mx-auto text-gray-400 mb-2"/><p className="font-medium text-gray-600">কোর্স ম্যাটেরিয়াল শীঘ্রই আপলোড করা হবে</p><p className="text-xs text-gray-400 mt-1">ভর্তি সম্পন্ন হলে এখানে পাঠ, ভিডিও ও সহায়ক উপকরণ দেখা যাবে।</p></div>
-        {course.enrolled && <div className="mt-6"><div className="flex justify-between text-sm text-gray-600 mb-2"><span>আপনার অগ্রগতি</span><span>{percent}% • {formatTime(progress)} / {course.durationMinutes || 120} মিনিট</span></div><div className="h-3 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-[#006A4E] transition-all" style={{width: `${percent}%`}}/></div><button onClick={togglePlayer} disabled={completed} className="mt-4 w-full sm:w-auto px-5 py-3 rounded-xl bg-[#006A4E] text-white font-medium inline-flex items-center justify-center gap-2 disabled:bg-green-100 disabled:text-green-700">{completed ? <><CheckCircle size={18}/> কোর্স সম্পন্ন</> : playing ? <><Pause size={18}/> বিরতি দিন</> : <><Play size={18}/> শেখা শুরু করুন</>}</button></div>}
-      </div>
-      {!course.enrolled && <div className="sticky bottom-0 p-4 sm:p-5 border-t border-gray-100 bg-white"><button onClick={enroll} disabled={enrolling || (user?.points || 0) < course.enrollmentCost} className="w-full py-3 rounded-xl bg-[#006A4E] text-white font-semibold disabled:opacity-50">{enrolling ? 'ভর্তি হচ্ছে...' : (user?.points || 0) < course.enrollmentCost ? `পর্যাপ্ত পয়েন্ট নেই (প্রয়োজন ${course.enrollmentCost})` : `ভর্তি হন — ${course.enrollmentCost} পয়েন্ট`}</button><p className="text-center text-xs text-gray-400 mt-2"><Star size={12} className="inline mr-1 text-yellow-500"/>আপনার বর্তমান পয়েন্ট: {user?.points || 0}</p></div>}
-    </div>
-  </div>;
+  const total = (course.durationMinutes || 120) * 60, percent = Math.min(100, Math.round(progress / total * 100)), completed = course.completed || progress >= total;
+  const enroll = async () => { if (!window.confirm(`এই কোর্সে ভর্তি হতে ${course.enrollmentCost} পয়েন্ট কাটা হবে। আপনি কি নিশ্চিত?`)) return; setEnrolling(true); setMessage(''); try { await api.enrollCourse(course.id); await refreshUser(); const c = await api.getCourse(course.id); setCourse(c); setProgress(c.progressSeconds || 0); } catch (e: any) { setMessage(e.message || 'ভর্তি সম্ভব হয়নি'); } finally { setEnrolling(false); } };
+  const togglePlayer = async () => { if (completed) return; if (playing) { await api.saveCourseProgress(course.id, progress); lastSaved.current = progress; } setPlaying(!playing); };
+  return <div className="max-w-3xl mx-auto pb-24 lg:pb-8"><Link to="/courses" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#006A4E] mb-5"><ArrowLeft size={16}/> কোর্সসমূহে ফিরে যান</Link>{message && <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700">{message}</div>}<div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"><div className="p-5 sm:p-7 bg-gradient-to-br from-[#006A4E] to-[#004d38] text-white"><div className="flex items-center gap-2 text-white/80 text-sm mb-3"><BookOpen size={16}/> {difficultyLabel[course.difficulty] || course.difficulty} • {course.lessons}টি পাঠ</div><h1 className="text-2xl font-bold">{course.title}</h1><p className="text-white/80 text-sm mt-3 leading-relaxed">{course.description}</p><div className="flex gap-4 mt-4 text-sm flex-wrap"><span className="flex items-center gap-1"><Clock size={15}/>{course.durationHours || 2} ঘন্টা</span><span>মূল্য: {course.enrollmentCost} পয়েন্ট</span><span>সম্পন্নের পুরস্কার: +{course.completionReward || 0}</span></div></div><div className="p-5 sm:p-7"><h2 className="font-bold text-gray-800">কোর্স ম্যাটেরিয়াল</h2><div className="mt-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center"><BookOpen className="mx-auto text-gray-400 mb-2"/><p className="font-medium text-gray-600">কোর্স ম্যাটেরিয়াল শীঘ্রই আপলোড করা হবে</p></div>{course.enrolled && <div className="mt-6"><div className="flex justify-between text-sm text-gray-600 mb-2"><span>আপনার অগ্রগতি</span><span>{percent}% • {formatTime(progress)} / {course.durationHours || 2} ঘন্টা</span></div><div className="h-3 bg-gray-100 rounded-full overflow-hidden"><div className="h-full bg-[#006A4E] transition-all" style={{width: `${percent}%`}}/></div><button onClick={togglePlayer} disabled={completed} className="mt-4 w-full sm:w-auto px-5 py-3 rounded-xl bg-[#006A4E] text-white font-medium inline-flex items-center justify-center gap-2 disabled:bg-green-100 disabled:text-green-700">{completed ? <><CheckCircle size={18}/> কোর্স সম্পন্ন • +{course.completionReward || 0} পয়েন্ট</> : playing ? <><Pause size={18}/> বিরতি দিন</> : <><Play size={18}/> শেখা শুরু করুন</>}</button></div>}</div>{!course.enrolled && <div className="sticky bottom-0 p-4 sm:p-5 border-t border-gray-100 bg-white"><button onClick={enroll} disabled={enrolling || (user?.points || 0) < course.enrollmentCost} className="w-full py-3 rounded-xl bg-[#006A4E] text-white font-semibold disabled:opacity-50">{enrolling ? 'ভর্তি হচ্ছে...' : (user?.points || 0) < course.enrollmentCost ? `পর্যাপ্ত পয়েন্ট নেই (প্রয়োজন ${course.enrollmentCost})` : `ভর্তি হন — ${course.enrollmentCost} পয়েন্ট`}</button><p className="text-center text-xs text-gray-400 mt-2"><Star size={12} className="inline mr-1 text-yellow-500"/>আপনার বর্তমান পয়েন্ট: {user?.points || 0}</p></div>}</div></div>;
 }

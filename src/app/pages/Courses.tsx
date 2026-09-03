@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router';
 import * as api from '../api';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, Clock, Users, CheckCircle, Star, Play, Award, Plus, Save, X, Trash2 } from 'lucide-react';
+import { BookOpen, Clock, Users, CheckCircle, Star, Play, Award, Plus, Save, X, Trash2, Pencil } from 'lucide-react';
 
 const CATEGORY_CONFIG: Record<string, { color: string; bg: string; label: string; emoji: string }> = {
   'Civic Awareness': { color: '#7C3AED', bg: '#F5F3FF', label: 'নাগরিক সচেতনতা', emoji: '🏛️' },
@@ -17,7 +16,7 @@ const DIFFICULTY_LABELS: Record<string, { label: string; color: string }> = {
   'Advanced': { label: 'উন্নত', color: '#DC2626' },
 };
 
-const BLANK_COURSE = { title: '', titleEn: '', description: '', category: 'Civic Awareness', duration: '', difficulty: 'Beginner', lessons: '', instructor: '' };
+const BLANK_COURSE = { title: '', titleEn: '', description: '', category: 'Civic Awareness', durationHours: 2, enrollmentCost: 100, completionReward: 0, difficulty: 'Beginner', lessons: '', instructor: '' };
 
 export default function Courses() {
   const { user } = useAuth();
@@ -25,11 +24,14 @@ export default function Courses() {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [enrolling, setEnrolling] = useState<string | null>(null);
+  const [completing, setCompleting] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCourse, setNewCourse] = useState(BLANK_COURSE);
   const [adding, setAdding] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -50,14 +52,41 @@ export default function Courses() {
 
   useEffect(() => { loadCourses(); }, []);
 
+  const handleEnroll = async (courseId: string) => {
+    setEnrolling(courseId);
+    try {
+      await api.enrollCourse(courseId);
+      showToast('✅ কোর্সে ভর্তি হয়েছেন! +৫ পয়েন্ট পেয়েছেন');
+      loadCourses();
+    } catch (err: any) {
+      showToast(err.message || 'ভর্তি ব্যর্থ হয়েছে', 'error');
+    } finally {
+      setEnrolling(null);
+    }
+  };
+
+  const handleComplete = async (courseId: string) => {
+    setCompleting(courseId);
+    try {
+      await api.completeCourse(courseId);
+      showToast('🎉 কোর্স সম্পন্ন! +২০ পয়েন্ট পেয়েছেন');
+      loadCourses();
+    } catch (err: any) {
+      showToast(err.message || 'সম্পন্ন করতে ব্যর্থ হয়েছে', 'error');
+    } finally {
+      setCompleting(null);
+    }
+  };
 
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdding(true);
     try {
-      await api.createAdminCourse({ ...newCourse, lessons: parseInt(newCourse.lessons) || 10, enrolledCount: 0 });
-      showToast('✅ কোর্স যোগ হয়েছে!');
+      if (editingCourse) await api.updateAdminCourse(editingCourse.id, { ...newCourse, lessons: parseInt(newCourse.lessons) || 10 });
+      else await api.createAdminCourse({ ...newCourse, lessons: parseInt(newCourse.lessons) || 10 });
+      showToast(editingCourse ? '✅ কোর্স আপডেট হয়েছে!' : '✅ কোর্স যোগ হয়েছে!');
       setNewCourse(BLANK_COURSE);
+      setEditingCourse(null);
       setShowAddForm(false);
       loadCourses();
     } catch (err: any) {
@@ -65,6 +94,12 @@ export default function Courses() {
     } finally {
       setAdding(false);
     }
+  };
+
+  const startEdit = (course: any) => {
+    setEditingCourse(course);
+    setNewCourse({ title: course.title, titleEn: course.titleEn || '', description: course.description, category: course.category, durationHours: course.durationHours || 2, enrollmentCost: course.enrollmentCost || 0, completionReward: course.completionReward || 0, difficulty: course.difficulty, lessons: String(course.lessons), instructor: course.instructor || '' });
+    setShowAddForm(true);
   };
 
   const handleDeleteCourse = async (courseId: string) => {
@@ -105,7 +140,7 @@ export default function Courses() {
         </div>
         {isAdmin && (
           <button
-            onClick={() => setShowAddForm(v => !v)}
+            onClick={() => { if (showAddForm) { setShowAddForm(false); setEditingCourse(null); setNewCourse(BLANK_COURSE); } else setShowAddForm(true); }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors"
             style={{ background: showAddForm ? '#DC2626' : '#006A4E' }}
           >
@@ -120,13 +155,13 @@ export default function Courses() {
         <div className="bg-white rounded-2xl shadow-sm border border-[#006A4E]/20 p-6 mb-6">
           <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
             <Plus size={18} className="text-[#006A4E]" />
-            নতুন কোর্স যোগ করুন
+            {editingCourse ? 'কোর্স সম্পাদনা করুন' : 'নতুন কোর্স যোগ করুন'}
           </h3>
           <form onSubmit={handleAddCourse} className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">কোর্সের নাম (বাংলা) <span className="text-red-500">*</span></label>
-                <input type="text" value={newCourse.title} onChange={e => setNewCourse(p => ({ ...p, title: e.target.value }))} placeholder="বাংলায় কোর্সের নাম" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E] text-sm" required />
+                <label className="block text-sm font-medium text-gray-700 mb-1">কোর্সের নাম <span className="text-red-500">*</span></label>
+                <input type="text" value={newCourse.title} onChange={e => setNewCourse(p => ({ ...p, title: e.target.value }))} placeholder="কোর্সের নাম" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E] text-sm" required />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">বিবরণ <span className="text-red-500">*</span></label>
@@ -150,12 +185,20 @@ export default function Courses() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">সময়কাল</label>
-                <input type="text" value={newCourse.duration} onChange={e => setNewCourse(p => ({ ...p, duration: e.target.value }))} placeholder="যেমন: ৪ ঘন্টা" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E] text-sm" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">সময়কাল (ঘন্টা)</label>
+                <input type="number" value={newCourse.durationHours} onChange={e => setNewCourse(p => ({ ...p, durationHours: Number(e.target.value) }))} min="1" step="0.5" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E] text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">পাঠ সংখ্যা</label>
                 <input type="number" value={newCourse.lessons} onChange={e => setNewCourse(p => ({ ...p, lessons: e.target.value }))} placeholder="পাঠের সংখ্যা" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E] text-sm" min="1" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ভর্তির মূল্য (পয়েন্ট)</label>
+                <input type="number" value={newCourse.enrollmentCost} onChange={e => setNewCourse(p => ({ ...p, enrollmentCost: Number(e.target.value) }))} min="0" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E] text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">সম্পন্নের পুরস্কার (পয়েন্ট)</label>
+                <input type="number" value={newCourse.completionReward} onChange={e => setNewCourse(p => ({ ...p, completionReward: Number(e.target.value) }))} min="0" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E] text-sm" />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">শিক্ষকের নাম</label>
@@ -164,7 +207,7 @@ export default function Courses() {
             </div>
             <button type="submit" disabled={adding} className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-medium disabled:opacity-60" style={{ background: '#006A4E' }}>
               <Save size={16} />
-              {adding ? 'যোগ হচ্ছে...' : 'কোর্স সংরক্ষণ করুন'}
+              {adding ? 'সংরক্ষণ হচ্ছে...' : editingCourse ? 'পরিবর্তন সংরক্ষণ করুন' : 'কোর্স সংরক্ষণ করুন'}
             </button>
           </form>
         </div>
@@ -206,10 +249,9 @@ export default function Courses() {
         <div className="bg-gradient-to-r from-[#006A4E] to-[#004d38] rounded-2xl p-4 mb-6 text-white">
           <div className="flex items-center gap-3 flex-wrap">
             <Star size={20} className="text-yellow-300" />
-            <p className="font-semibold">কোর্সে ভর্তি:</p>
-            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">সহজ = ১০০ পয়েন্ট</span>
-            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">মাঝারি = ২০০ পয়েন্ট</span>
-            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">উন্নত = ৩০০ পয়েন্ট</span>
+            <p className="font-semibold">পয়েন্ট সিস্টেম:</p>
+            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">ভর্তি = +৫ পয়েন্ট</span>
+            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">সম্পন্ন = +২০ পয়েন্ট</span>
           </div>
         </div>
       )}
@@ -286,14 +328,7 @@ export default function Courses() {
                         </div>
                       )}
                       {isAdmin && (
-                        <button
-                          onClick={() => handleDeleteCourse(course.id)}
-                          disabled={deletingId === course.id}
-                          className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40"
-                          title="কোর্স মুছুন"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <><button onClick={() => startEdit(course)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg" title="কোর্স সম্পাদনা করুন"><Pencil size={14} /></button><button onClick={() => handleDeleteCourse(course.id)} disabled={deletingId === course.id} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40" title="কোর্স মুছুন"><Trash2 size={14} /></button></>
                       )}
                     </div>
                   </div>
@@ -304,8 +339,10 @@ export default function Courses() {
                   <div className="flex items-center gap-3 mt-3 flex-wrap">
                     <span className="flex items-center gap-1 text-xs text-gray-500">
                       <Clock size={11} />
-                      {course.duration}
+                      {course.durationHours || 2} ঘন্টা
                     </span>
+                    <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">ভর্তি: {course.enrollmentCost || 0}</span>
+                    <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">পুরস্কার: +{course.completionReward || 0}</span>
                     <span className="flex items-center gap-1 text-xs text-gray-500">
                       <BookOpen size={11} />
                       {course.lessons}টি পাঠ
@@ -326,16 +363,45 @@ export default function Courses() {
                   <div className="px-5 pb-3">
                     <div className="flex justify-between text-xs text-gray-400 mb-1">
                       <span>অগ্রগতি</span>
-                      <span>{Math.round(Math.min(100, (course.progressSeconds || 0) / ((course.durationMinutes || 120) * 60) * 100))}%</span>
+                      <span>{isCompleted ? '100%' : '0%'}</span>
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full">
-                      <div className="h-1.5 bg-green-500 rounded-full transition-all" style={{ width: `${Math.min(100, (course.progressSeconds || 0) / ((course.durationMinutes || 120) * 60) * 100)}%` }}></div>
+                      <div className="h-1.5 bg-green-500 rounded-full transition-all" style={{ width: isCompleted ? '100%' : '0%' }}></div>
                     </div>
                   </div>
                 )}
 
                 {/* Action Button — users only */}
-                {!isAdmin && <div className="px-5 pb-5"><Link to={`/courses/${course.id}`} className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors flex items-center justify-center gap-2" style={{ background: '#006A4E' }}><BookOpen size={16} /> বিস্তারিত {isEnrolled && 'দেখুন'}</Link></div>}
+                {!isAdmin && (
+                  <div className="px-5 pb-5">
+                    {isCompleted ? (
+                      <div className="w-full py-2.5 rounded-xl text-center text-sm font-medium text-green-700 bg-green-50 border border-green-200 flex items-center justify-center gap-2">
+                        <CheckCircle size={16} />
+                        কোর্স সম্পন্ন ✓
+                      </div>
+                    ) : isEnrolled ? (
+                      <button
+                        onClick={() => handleComplete(course.id)}
+                        disabled={completing === course.id}
+                        className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                        style={{ background: '#2563EB' }}
+                      >
+                        <CheckCircle size={16} />
+                        {completing === course.id ? 'সম্পন্ন হচ্ছে...' : 'কোর্স সম্পন্ন করুন (+২০ পয়েন্ট)'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleEnroll(course.id)}
+                        disabled={enrolling === course.id}
+                        className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                        style={{ background: '#006A4E' }}
+                      >
+                        <Play size={16} />
+                        {enrolling === course.id ? 'ভর্তি হচ্ছে...' : 'ভর্তি হন (+৫ পয়েন্ট)'}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
