@@ -31,11 +31,19 @@ export const logout = async () => { const { error } = await supabase.auth.signOu
 
 export const getProblems = async (params?: { category?: string; status?: string; myOnly?: boolean }) => {
   const user = await ensureUser(); const { data, error } = await supabase.rpc('problem_with_counts'); fail(error);
-  return (data || []).filter((p: any) => (!params?.myOnly || p.user_id === user.id) && (!params?.category || p.category === params.category) && (!params?.status || p.status === params.status)).map((p: any) => ({ ...p, userId: p.user_id, userName: p.user_name, solveMethod: p.solve_method, organizationId: p.organization_id, adminNote: p.admin_note, createdAt: p.created_at, updatedAt: p.updated_at, upvotedBy: p.upvoted_by || [] })).sort((a: any, b: any) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  return (data || []).filter((p: any) => (!params?.myOnly || p.user_id === user.id) && (!params?.category || p.category === params.category) && (!params?.status || p.status === params.status)).map((p: any) => ({ ...p, userId: p.user_id, userName: p.user_name, solveMethod: p.solve_method, organizationId: p.organization_id, adminNote: p.admin_note, imagePath: p.image_path, imageUrl: p.image_path ? supabase.storage.from('problem-images').getPublicUrl(p.image_path).data.publicUrl : null, createdAt: p.created_at, updatedAt: p.updated_at, upvotedBy: p.upvoted_by || [] })).sort((a: any, b: any) => +new Date(b.createdAt) - +new Date(a.createdAt));
 };
 export const getProblem = async (id: string) => { const problem = (await getProblems()).find((item: any) => item.id === id); if (!problem) throw new Error('সমস্যা পাওয়া যায়নি'); return problem; };
-export const submitProblem = async (input: { title: string; description: string; category: string; solveMethod: string; organizationId?: string; location?: string; division?: string; district?: string }) => {
-  const user = await ensureUser(); const { data, error } = await supabase.from('problems').insert({ user_id: user.id, title: input.title, description: input.description, category: input.category, solve_method: input.solveMethod, organization_id: input.organizationId || null, location: input.location || '', division: input.division || '', district: input.district || '' }).select().single(); fail(error); return { problem: data, pointsEarned: 10 };
+export const submitProblem = async (input: { title: string; description: string; category: string; solveMethod: string; organizationId?: string; location?: string; division?: string; district?: string; imageFile?: File | null }) => {
+  const user = await ensureUser();
+  let imagePath: string | null = null;
+  if (input.imageFile) {
+    const extension = input.imageFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+    imagePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await supabase.storage.from('problem-images').upload(imagePath, input.imageFile, { contentType: input.imageFile.type, upsert: false });
+    fail(uploadError);
+  }
+  const { data, error } = await supabase.from('problems').insert({ user_id: user.id, title: input.title, description: input.description, category: input.category, solve_method: input.solveMethod, organization_id: input.organizationId || null, location: input.location || '', division: input.division || '', district: input.district || '', image_path: imagePath }).select().single(); fail(error); return { problem: data, pointsEarned: 10 };
 };
 export const updateProblem = async (id: string, input: Partial<{ status: string; adminNote: string; title: string; description: string }>) => {
   const changes: any = {}; if (input.status !== undefined) changes.status = input.status; if (input.adminNote !== undefined) changes.admin_note = input.adminNote; if (input.title !== undefined) changes.title = input.title; if (input.description !== undefined) changes.description = input.description;

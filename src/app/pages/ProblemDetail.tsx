@@ -56,6 +56,7 @@ export default function ProblemDetail() {
   }, [id]);
 
   const handleUpvote = async () => {
+    if (user?.role === 'admin') return;
     try {
       const res = await api.upvoteProblem(id!);
       setProblem((prev: any) => ({
@@ -138,6 +139,15 @@ export default function ProblemDetail() {
             </span>
           </div>
         </div>
+
+        {problem.imageUrl && (
+          <div className="p-6 border-b border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">সংযুক্ত ছবি</h3>
+            <a href={problem.imageUrl} target="_blank" rel="noreferrer" className="block">
+              <img src={problem.imageUrl} alt="রিপোর্ট করা সমস্যার ছবি" className="w-full max-h-[28rem] object-contain rounded-xl border border-gray-200 bg-gray-50" />
+            </a>
+          </div>
+        )}
 
         {/* Description */}
         <div className="p-6 border-b border-gray-100">
@@ -254,13 +264,20 @@ export default function ProblemDetail() {
               <p className="text-sm text-gray-600 mb-1">এই সমস্যাটি কি আপনিও অনুভব করছেন?</p>
               <p className="text-xs text-gray-400">আপভোট করে সমস্যাটির গুরুত্ব বাড়ান</p>
             </div>
-            <button
-              onClick={handleUpvote}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 ${isUpvoted ? 'bg-[#006A4E] text-white' : 'border-2 border-[#006A4E] text-[#006A4E] hover:bg-[#006A4E]/5'}`}
-            >
-              <ThumbsUp size={16} className={isUpvoted ? 'fill-white' : ''} />
-              {problem.upvotes || 0} আপভোট
-            </button>
+            {user?.role === 'admin' ? (
+              <div className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-600 font-medium text-sm">
+                <ThumbsUp size={16} />
+                {problem.upvotes || 0} জন নাগরিক সমর্থন করেছেন
+              </div>
+            ) : (
+              <button
+                onClick={handleUpvote}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 ${isUpvoted ? 'bg-[#006A4E] text-white' : 'border-2 border-[#006A4E] text-[#006A4E] hover:bg-[#006A4E]/5'}`}
+              >
+                <ThumbsUp size={16} className={isUpvoted ? 'fill-white' : ''} />
+                {problem.upvotes || 0} সমর্থন
+              </button>
+            )}
           </div>
 
           {problem.status === 'resolved' && (

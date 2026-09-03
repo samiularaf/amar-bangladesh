@@ -63,7 +63,8 @@ export default function SubmitProblem() {
     solveMethod: 'organization' as 'own' | 'organization',
     organizationId: '',
   });
-  const [imageFile, setImageFile] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<any>(null);
@@ -73,20 +74,22 @@ export default function SubmitProblem() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        alert('শুধু JPG, PNG অথবা WEBP ছবি আপলোড করুন');
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         alert('ছবির সাইজ ৫MB এর কম হতে হবে');
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageFile(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const removeImage = () => {
     setImageFile(null);
+    setImagePreview(null);
   };
 
   const canNext = () => {
@@ -100,7 +103,7 @@ export default function SubmitProblem() {
     setLoading(true);
     setError('');
     try {
-      const result = await api.submitProblem(form);
+      const result = await api.submitProblem({ ...form, imageFile });
       setSuccess(result);
       // Update user points in context
       if (user) setUser({ ...user, points: user.points + 10 });
@@ -131,7 +134,7 @@ export default function SubmitProblem() {
             <button onClick={() => navigate('/problems', { state: { myOnly: true } })} className="flex-1 border border-[#006A4E] text-[#006A4E] py-3 rounded-xl font-medium hover:bg-[#006A4E]/5 transition-colors">
               আমার সমস্যা দেখুন
             </button>
-            <button onClick={() => { setSuccess(null); setStep(0); setForm({ category: '', title: '', description: '', location: '', division: user?.division || '', district: user?.district || '', solveMethod: 'organization', organizationId: '' }); setImageFile(null); }} className="flex-1 text-white py-3 rounded-xl font-medium transition-colors" style={{ background: '#006A4E' }}>
+            <button onClick={() => { setSuccess(null); setStep(0); setForm({ category: '', title: '', description: '', location: '', division: user?.division || '', district: user?.district || '', solveMethod: 'organization', organizationId: '' }); setImageFile(null); setImagePreview(null); }} className="flex-1 text-white py-3 rounded-xl font-medium transition-colors" style={{ background: '#006A4E' }}>
               নতুন সমস্যা জানান
             </button>
           </div>
@@ -231,7 +234,7 @@ export default function SubmitProblem() {
                 </label>
               ) : (
                 <div className="relative">
-                  <img src={imageFile} alt="সমস্যার ছবি" className="w-full h-48 object-cover rounded-xl border border-gray-200" />
+                  <img src={imagePreview || ''} alt="সমস্যার ছবি" className="w-full h-48 object-cover rounded-xl border border-gray-200" />
                   <button
                     onClick={removeImage}
                     type="button"
@@ -342,7 +345,7 @@ export default function SubmitProblem() {
             {imageFile && (
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-700 mb-2">সংযুক্ত ছবি:</p>
-                <img src={imageFile} alt="সমস্যার ছবি" className="w-full max-h-64 object-contain rounded-xl border border-gray-200" />
+                <img src={imagePreview || ''} alt="সমস্যার ছবি" className="w-full max-h-64 object-contain rounded-xl border border-gray-200" />
               </div>
             )}
 

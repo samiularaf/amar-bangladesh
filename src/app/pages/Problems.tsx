@@ -59,6 +59,7 @@ export default function Problems() {
   const handleUpvote = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
+    if (user?.role === 'admin') return;
     try {
       const res = await api.upvoteProblem(id);
       setProblems(prev => prev.map(p => p.id === id ? { ...p, upvotes: res.upvotes, upvotedBy: res.upvoted ? [...(p.upvotedBy || []), user?.id] : (p.upvotedBy || []).filter((uid: string) => uid !== user?.id) } : p));
@@ -218,13 +219,20 @@ export default function Problems() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
-                    <button
-                      onClick={e => handleUpvote(e, prob.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${isUpvoted ? 'bg-[#006A4E]/10 text-[#006A4E]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                    >
-                      <ThumbsUp size={12} className={isUpvoted ? 'fill-[#006A4E]' : ''} />
-                      {prob.upvotes || 0} সমর্থন
-                    </button>
+                    {user?.role === 'admin' ? (
+                      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                        <ThumbsUp size={12} />
+                        {prob.upvotes || 0} সমর্থন
+                      </span>
+                    ) : (
+                      <button
+                        onClick={e => handleUpvote(e, prob.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${isUpvoted ? 'bg-[#006A4E]/10 text-[#006A4E]' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                      >
+                        <ThumbsUp size={12} className={isUpvoted ? 'fill-[#006A4E]' : ''} />
+                        {prob.upvotes || 0} সমর্থন
+                      </button>
+                    )}
                     <span className="text-xs text-[#006A4E] font-medium">বিস্তারিত দেখুন →</span>
                   </div>
                 </div>
