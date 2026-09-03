@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import * as api from '../api';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, Clock, Users, CheckCircle, Star, Play, Award, Plus, Save, X, Trash2, Pencil } from 'lucide-react';
+import { BookOpen, Clock, Users, CheckCircle, Play, Award, Plus, Save, X, Trash2, Pencil } from 'lucide-react';
 
 const CATEGORY_CONFIG: Record<string, { color: string; bg: string; label: string; emoji: string }> = {
   'Civic Awareness': { color: '#7C3AED', bg: '#F5F3FF', label: 'নাগরিক সচেতনতা', emoji: '🏛️' },
@@ -244,18 +244,6 @@ export default function Courses() {
           </>
         )}
       </div>
-
-      {/* Points Guide — users only */}
-      {!isAdmin && (
-        <div className="bg-gradient-to-r from-[#006A4E] to-[#004d38] rounded-2xl p-4 mb-6 text-white">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Star size={20} className="text-yellow-300" />
-            <p className="font-semibold">পয়েন্ট সিস্টেম:</p>
-            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">ভর্তি = +৫ পয়েন্ট</span>
-            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">সম্পন্ন = +২০ পয়েন্ট</span>
-          </div>
-        </div>
-      )}
 
       {/* Category Filter */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
