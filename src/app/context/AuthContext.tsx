@@ -20,6 +20,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<User>;
   signInWithGoogle: () => Promise<void>;
   register: (data: { name: string; email: string; password: string; division?: string; district?: string; phone?: string }) => Promise<{ requiresEmailConfirmation: boolean }>;
+  updateProfile: (data: { name: string; division?: string; district?: string; phone?: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: (user: User) => void;
@@ -60,13 +61,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data;
   };
 
+  const updateProfile = async (formData: { name: string; division?: string; district?: string; phone?: string }) => {
+    const profile = await api.updateMyProfile(formData);
+    setUserState(profile);
+  };
+
   const logout = async () => {
     try { await api.logout(); } catch {}
     setUserState(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signInWithGoogle, register, logout, refreshUser, setUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signInWithGoogle, register, updateProfile, logout, refreshUser, setUser }}>
       {children}
     </AuthContext.Provider>
   );

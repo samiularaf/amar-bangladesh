@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, AlertCircle, PlusCircle, BookOpen, Trophy,
-  LogOut, Menu, X, ChevronRight, Shield, Users, Star, Bell
+  LogOut, Menu, X, ChevronRight, Shield, Users, Star, Bell, UserCircle
 } from 'lucide-react';
 
 const BD_GREEN = '#006A4E';
@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { to: '/problems', icon: <AlertCircle size={20} />, label: 'সকল সমস্যা' },
   { to: '/courses', icon: <BookOpen size={20} />, label: 'কোর্সসমূহ' },
   { to: '/leaderboard', icon: <Trophy size={20} />, label: 'লিডারবোর্ড' },
+  { to: '/profile', icon: <UserCircle size={20} />, label: 'প্রোফাইল' },
 ];
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

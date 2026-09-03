@@ -11,6 +11,9 @@ import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
 import Leaderboard from './pages/Leaderboard';
 import AdminPanel from './pages/AdminPanel';
+import Profile from './pages/Profile';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import NotFound from './pages/NotFound';
 import { useAuth } from './context/AuthContext';
 
@@ -39,6 +42,8 @@ export const router = createBrowserRouter([
     path: '/register',
     element: <Register />,
   },
+  { path: '/forgot-password', element: <ForgotPassword /> },
+  { path: '/reset-password', element: <ResetPassword /> },
   {
     path: '/',
     element: <ProtectedLayout />,
@@ -51,6 +56,7 @@ export const router = createBrowserRouter([
       { path: 'courses', element: <Courses /> },
       { path: 'courses/:id', element: <CourseDetail /> },
       { path: 'leaderboard', element: <Leaderboard /> },
+      { path: 'profile', element: <Profile /> },
       { path: 'admin', element: <AdminOnly /> },
     ],
   },

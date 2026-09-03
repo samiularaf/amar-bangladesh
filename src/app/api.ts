@@ -34,6 +34,35 @@ export const getMe = async () => {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
   fail(error); if (data.suspended) throw new Error('এই অ্যাকাউন্টটি স্থগিত করা হয়েছে'); return mapProfile(data);
 };
+export const getAuthProvider = async () => {
+  const user = await ensureUser();
+  return user.app_metadata?.provider === 'google' ? 'google' : 'email';
+};
+export const updateMyProfile = async (input: { name: string; division?: string; district?: string; phone?: string }) => {
+  const { data, error } = await supabase.rpc('update_my_profile', {
+    profile_name: input.name,
+    profile_division: input.division || '',
+    profile_district: input.district || '',
+    profile_phone: input.phone || '',
+  });
+  fail(error);
+  return mapProfile(data);
+};
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  const user = await ensureUser();
+  const { error: verifyError } = await supabase.auth.signInWithPassword({ email: user.email || '', password: currentPassword });
+  fail(verifyError);
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  fail(error);
+};
+export const sendPasswordReset = async (email: string) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+  fail(error);
+};
+export const resetPassword = async (newPassword: string) => {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  fail(error);
+};
 export const logout = async () => { const { error } = await supabase.auth.signOut(); fail(error); return { ok: true }; };
 
 export const getProblems = async (params?: { category?: string; status?: string; myOnly?: boolean }) => {

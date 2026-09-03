@@ -1,0 +1,10 @@
+import React, { useState } from 'react';
+import { Link } from 'react-router';
+import { AlertCircle, CheckCircle, Mail } from 'lucide-react';
+import * as api from '../api';
+
+export default function ForgotPassword() {
+  const [email, setEmail] = useState(''); const [loading, setLoading] = useState(false); const [sent, setSent] = useState(false); const [error, setError] = useState('');
+  const submit = async (event: React.FormEvent) => { event.preventDefault(); setError(''); setLoading(true); try { await api.sendPasswordReset(email); setSent(true); } catch (err: any) { setError(err.message || 'ইমেইল পাঠানো যায়নি'); } finally { setLoading(false); } };
+  return <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5"><div className="bg-white w-full max-w-md rounded-2xl shadow-lg p-7"><h1 className="text-2xl font-bold text-gray-800">পাসওয়ার্ড রিসেট</h1><p className="text-sm text-gray-500 mt-2 mb-6">আপনার ইমেইল দিন। আমরা একটি নিরাপদ রিসেট লিংক পাঠাব।</p>{sent ? <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-xl text-sm flex gap-2"><CheckCircle size={18} />ইমেইল পাঠানো হয়েছে। ইনবক্স ও Spam ফোল্ডার দেখুন।</div> : <form onSubmit={submit} className="space-y-4"><label className="block text-sm font-medium text-gray-700">ইমেইল<input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="mt-1.5 w-full px-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#006A4E]" placeholder="example@email.com" /></label>{error && <p className="text-sm text-red-600 flex gap-1"><AlertCircle size={16} />{error}</p>}<button disabled={loading} className="w-full py-3 rounded-xl bg-[#006A4E] text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-60"><Mail size={18} />{loading ? 'পাঠানো হচ্ছে...' : 'রিসেট লিংক পাঠান'}</button></form>}<Link to="/login" className="block text-center text-sm text-[#006A4E] mt-5 hover:underline">লগইনে ফিরে যান</Link></div></div>;
+}
