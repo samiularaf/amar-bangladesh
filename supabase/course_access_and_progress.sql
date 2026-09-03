@@ -11,6 +11,7 @@ alter table public.enrollments add column if not exists progress_seconds integer
 
 update public.courses set enrollment_cost = case difficulty when 'Beginner' then 100 when 'Intermediate' then 200 when 'Advanced' then 300 else 100 end;
 
+<<<<<<< ours
 -- Reporting/resolution earns both balances. Course enrollment spends only current points.
 create or replace function public.award_submission_points() returns trigger language plpgsql security definer set search_path = public as $$
 begin update public.profiles set points = points + 10, current_points = current_points + 10, lifetime_points = lifetime_points + 10 where id = new.user_id; return new; end; $$;
@@ -19,6 +20,8 @@ begin new.updated_at = now(); if new.status = 'resolved' and old.status <> 'reso
 drop trigger if exists enrollment_created on public.enrollments;
 drop trigger if exists enrollment_completed on public.enrollments;
 
+=======
+>>>>>>> theirs
 create or replace function public.enroll_in_course(course_uuid uuid) returns public.enrollments
 language plpgsql security definer set search_path = public as $$
 declare cost integer; enrollment public.enrollments;
