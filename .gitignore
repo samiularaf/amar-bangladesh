@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.local
+.env.*.local
+dist
+
+# Legacy Make/Supabase mock service; it is not used by this application.
+supabase/functions/
+utils/supabase/info.tsx
