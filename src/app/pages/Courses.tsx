@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import * as api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { BookOpen, Clock, Users, CheckCircle, Star, Play, Award, Plus, Save, X, Trash2, Pencil } from 'lucide-react';
@@ -371,37 +372,7 @@ export default function Courses() {
                   </div>
                 )}
 
-                {/* Action Button — users only */}
-                {!isAdmin && (
-                  <div className="px-5 pb-5">
-                    {isCompleted ? (
-                      <div className="w-full py-2.5 rounded-xl text-center text-sm font-medium text-green-700 bg-green-50 border border-green-200 flex items-center justify-center gap-2">
-                        <CheckCircle size={16} />
-                        কোর্স সম্পন্ন ✓
-                      </div>
-                    ) : isEnrolled ? (
-                      <button
-                        onClick={() => handleComplete(course.id)}
-                        disabled={completing === course.id}
-                        className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-                        style={{ background: '#2563EB' }}
-                      >
-                        <CheckCircle size={16} />
-                        {completing === course.id ? 'সম্পন্ন হচ্ছে...' : 'কোর্স সম্পন্ন করুন (+২০ পয়েন্ট)'}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleEnroll(course.id)}
-                        disabled={enrolling === course.id}
-                        className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-                        style={{ background: '#006A4E' }}
-                      >
-                        <Play size={16} />
-                        {enrolling === course.id ? 'ভর্তি হচ্ছে...' : 'ভর্তি হন (+৫ পয়েন্ট)'}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {!isAdmin && <div className="px-5 pb-5"><Link to={`/courses/${course.id}`} className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors flex items-center justify-center gap-2" style={{ background: '#006A4E' }}><BookOpen size={16} /> বিস্তারিত</Link></div>}
               </div>
             );
           })}

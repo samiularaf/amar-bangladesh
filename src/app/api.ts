@@ -7,7 +7,7 @@ const ensureUser = async () => {
   if (!data.user) throw new Error('অনুমোদন নেই — আবার লগইন করুন');
   return data.user;
 };
-const mapProfile = (profile: any) => ({ id: profile.id, name: profile.name, email: profile.email, role: profile.role, points: profile.points, division: profile.division, district: profile.district, phone: profile.phone, suspended: profile.suspended, createdAt: profile.created_at });
+const mapProfile = (profile: any) => ({ id: profile.id, name: profile.name, email: profile.email, role: profile.role, points: profile.current_points ?? profile.points, lifetimePoints: profile.lifetime_points ?? profile.points, division: profile.division, district: profile.district, phone: profile.phone, suspended: profile.suspended, createdAt: profile.created_at });
 
 export const login = async (email: string, password: string) => {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -61,10 +61,12 @@ export const getCourses = async () => {
   const user = await ensureUser(); const [{ data: courses, error: coursesError }, { data: enrollments, error: enrollmentError }] = await Promise.all([supabase.from('courses').select('*').order('created_at'), supabase.from('enrollments').select('*').eq('user_id', user.id)]); fail(coursesError); fail(enrollmentError);
   return (courses || []).map((course: any) => { const enrollment = (enrollments || []).find((item: any) => item.course_id === course.id); return { ...course, titleEn: course.title_en, enrollmentCost: course.enrollment_cost, completionReward: course.completion_reward || 0, durationMinutes: course.duration_minutes, durationHours: (course.duration_minutes || 120) / 60, enrolledCount: 0, enrolled: !!enrollment, completed: enrollment?.completed || false, progressSeconds: enrollment?.progress_seconds || 0 }; });
 };
-export const enrollCourse = async (id: string) => { const user = await ensureUser(); const { error } = await supabase.from('enrollments').insert({ user_id: user.id, course_id: id }); fail(error); return { ok: true, pointsEarned: 5 }; };
-export const completeCourse = async (id: string) => { const user = await ensureUser(); const { error } = await supabase.from('enrollments').update({ completed: true }).eq('course_id', id).eq('user_id', user.id).eq('completed', false); fail(error); return { ok: true, pointsEarned: 20 }; };
+export const getCourse = async (id: string) => { const course = (await getCourses()).find((item: any) => item.id === id); if (!course) throw new Error('কোর্স পাওয়া যায়নি'); return course; };
+export const enrollCourse = async (id: string) => { const { error } = await supabase.rpc('enroll_in_course', { course_uuid: id }); fail(error); return { ok: true }; };
+export const saveCourseProgress = async (id: string, progressSeconds: number) => { const { data, error } = await supabase.rpc('record_course_progress', { course_uuid: id, seconds_watched: Math.floor(progressSeconds) }); fail(error); return data; };
+export const completeCourse = async (id: string) => saveCourseProgress(id, Number.MAX_SAFE_INTEGER);
 export const getMyEnrollments = async () => { const user = await ensureUser(); const { data, error } = await supabase.from('enrollments').select('*, courses(*)').eq('user_id', user.id); fail(error); return (data || []).map((item: any) => ({ ...item, course: item.courses })); };
-export const getLeaderboard = async () => { const { data, error } = await supabase.from('profiles').select('*').neq('role', 'admin').order('points', { ascending: false }).limit(20); fail(error); return (data || []).map(mapProfile); };
+export const getLeaderboard = async () => { const { data, error } = await supabase.from('profiles').select('*').neq('role', 'admin').order('lifetime_points', { ascending: false }).limit(20); fail(error); return (data || []).map(mapProfile); };
 
 export const getAdminStats = async () => {
   const [problems, profiles, courses, enrollments] = await Promise.all([getProblems(), supabase.from('profiles').select('id, role'), supabase.from('courses').select('id'), supabase.from('enrollments').select('id')]); fail(profiles.error); fail(courses.error); fail(enrollments.error);
