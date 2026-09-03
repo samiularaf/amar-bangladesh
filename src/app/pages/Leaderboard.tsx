@@ -54,7 +54,7 @@ export default function Leaderboard() {
             <p className="text-sm font-semibold text-gray-700 text-center truncate w-full px-1">{leaders[1]?.name}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star size={12} className="text-yellow-400" />
-              <span className="text-sm font-bold text-gray-600">{leaders[1]?.points}</span>
+              <span className="text-sm font-bold text-gray-600">{leaders[1]?.lifetimePoints}</span>
             </div>
             <div className="h-16 w-full bg-gray-200 rounded-t-xl mt-2"></div>
           </div>
@@ -67,7 +67,7 @@ export default function Leaderboard() {
             <p className="text-sm font-bold text-gray-800 text-center truncate w-full px-1">{leaders[0]?.name}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star size={13} className="text-yellow-400" />
-              <span className="text-sm font-bold" style={{ color: '#006A4E' }}>{leaders[0]?.points}</span>
+              <span className="text-sm font-bold" style={{ color: '#006A4E' }}>{leaders[0]?.lifetimePoints}</span>
             </div>
             <div className="h-24 w-full rounded-t-xl mt-2" style={{ background: '#006A4E' }}></div>
           </div>
@@ -80,7 +80,7 @@ export default function Leaderboard() {
             <p className="text-sm font-semibold text-gray-700 text-center truncate w-full px-1">{leaders[2]?.name}</p>
             <div className="flex items-center gap-1 mt-1">
               <Star size={12} className="text-yellow-400" />
-              <span className="text-sm font-bold text-gray-600">{leaders[2]?.points}</span>
+              <span className="text-sm font-bold text-gray-600">{leaders[2]?.lifetimePoints}</span>
             </div>
             <div className="h-10 w-full bg-amber-200 rounded-t-xl mt-2"></div>
           </div>
@@ -96,8 +96,8 @@ export default function Leaderboard() {
             <p className="text-white font-bold">#{myRank} স্থানে আছেন</p>
           </div>
           <div className="ml-auto text-right">
-            <p className="text-white/70 text-xs">আপনার পয়েন্ট</p>
-            <p className="text-yellow-300 font-bold">{user?.points}</p>
+            <p className="text-white/70 text-xs">আজীবন পয়েন্ট</p>
+            <p className="text-yellow-300 font-bold">{user?.lifetimePoints}</p>
           </div>
         </div>
       )}
@@ -132,7 +132,7 @@ export default function Leaderboard() {
             {leaders.map((leader, index) => {
               const rank = index + 1;
               const isMe = leader.id === user?.id;
-              const level = LEVEL_CONFIG(leader.points);
+              const level = LEVEL_CONFIG(leader.lifetimePoints);
               return (
                 <div
                   key={leader.id}
@@ -157,7 +157,7 @@ export default function Leaderboard() {
                   <div className="col-span-2 text-center">
                     <div className="flex items-center justify-center gap-1">
                       <Star size={13} className="text-yellow-400" />
-                      <span className="font-bold text-sm" style={{ color: isMe ? '#006A4E' : '#1F2937' }}>{leader.points}</span>
+                      <span className="font-bold text-sm" style={{ color: isMe ? '#006A4E' : '#1F2937' }}>{leader.lifetimePoints}</span>
                     </div>
                   </div>
                   <div className="col-span-2 text-center hidden sm:block">

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import * as api from '../api';
 import { useAuth } from '../context/AuthContext';
 import { BookOpen, Clock, Users, CheckCircle, Star, Play, Award, Plus, Save, X, Trash2 } from 'lucide-react';
@@ -24,8 +25,6 @@ export default function Courses() {
 
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [enrolling, setEnrolling] = useState<string | null>(null);
-  const [completing, setCompleting] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -51,31 +50,6 @@ export default function Courses() {
 
   useEffect(() => { loadCourses(); }, []);
 
-  const handleEnroll = async (courseId: string) => {
-    setEnrolling(courseId);
-    try {
-      await api.enrollCourse(courseId);
-      showToast('✅ কোর্সে ভর্তি হয়েছেন! +৫ পয়েন্ট পেয়েছেন');
-      loadCourses();
-    } catch (err: any) {
-      showToast(err.message || 'ভর্তি ব্যর্থ হয়েছে', 'error');
-    } finally {
-      setEnrolling(null);
-    }
-  };
-
-  const handleComplete = async (courseId: string) => {
-    setCompleting(courseId);
-    try {
-      await api.completeCourse(courseId);
-      showToast('🎉 কোর্স সম্পন্ন! +২০ পয়েন্ট পেয়েছেন');
-      loadCourses();
-    } catch (err: any) {
-      showToast(err.message || 'সম্পন্ন করতে ব্যর্থ হয়েছে', 'error');
-    } finally {
-      setCompleting(null);
-    }
-  };
 
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,9 +206,10 @@ export default function Courses() {
         <div className="bg-gradient-to-r from-[#006A4E] to-[#004d38] rounded-2xl p-4 mb-6 text-white">
           <div className="flex items-center gap-3 flex-wrap">
             <Star size={20} className="text-yellow-300" />
-            <p className="font-semibold">পয়েন্ট সিস্টেম:</p>
-            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">ভর্তি = +৫ পয়েন্ট</span>
-            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">সম্পন্ন = +২০ পয়েন্ট</span>
+            <p className="font-semibold">কোর্সে ভর্তি:</p>
+            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">সহজ = ১০০ পয়েন্ট</span>
+            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">মাঝারি = ২০০ পয়েন্ট</span>
+            <span className="bg-white/20 rounded-full px-3 py-1 text-xs">উন্নত = ৩০০ পয়েন্ট</span>
           </div>
         </div>
       )}
@@ -351,45 +326,16 @@ export default function Courses() {
                   <div className="px-5 pb-3">
                     <div className="flex justify-between text-xs text-gray-400 mb-1">
                       <span>অগ্রগতি</span>
-                      <span>{isCompleted ? '100%' : '0%'}</span>
+                      <span>{Math.round(Math.min(100, (course.progressSeconds || 0) / ((course.durationMinutes || 120) * 60) * 100))}%</span>
                     </div>
                     <div className="h-1.5 bg-gray-100 rounded-full">
-                      <div className="h-1.5 bg-green-500 rounded-full transition-all" style={{ width: isCompleted ? '100%' : '0%' }}></div>
+                      <div className="h-1.5 bg-green-500 rounded-full transition-all" style={{ width: `${Math.min(100, (course.progressSeconds || 0) / ((course.durationMinutes || 120) * 60) * 100)}%` }}></div>
                     </div>
                   </div>
                 )}
 
                 {/* Action Button — users only */}
-                {!isAdmin && (
-                  <div className="px-5 pb-5">
-                    {isCompleted ? (
-                      <div className="w-full py-2.5 rounded-xl text-center text-sm font-medium text-green-700 bg-green-50 border border-green-200 flex items-center justify-center gap-2">
-                        <CheckCircle size={16} />
-                        কোর্স সম্পন্ন ✓
-                      </div>
-                    ) : isEnrolled ? (
-                      <button
-                        onClick={() => handleComplete(course.id)}
-                        disabled={completing === course.id}
-                        className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-                        style={{ background: '#2563EB' }}
-                      >
-                        <CheckCircle size={16} />
-                        {completing === course.id ? 'সম্পন্ন হচ্ছে...' : 'কোর্স সম্পন্ন করুন (+২০ পয়েন্ট)'}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleEnroll(course.id)}
-                        disabled={enrolling === course.id}
-                        className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-                        style={{ background: '#006A4E' }}
-                      >
-                        <Play size={16} />
-                        {enrolling === course.id ? 'ভর্তি হচ্ছে...' : 'ভর্তি হন (+৫ পয়েন্ট)'}
-                      </button>
-                    )}
-                  </div>
-                )}
+                {!isAdmin && <div className="px-5 pb-5"><Link to={`/courses/${course.id}`} className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors flex items-center justify-center gap-2" style={{ background: '#006A4E' }}><BookOpen size={16} /> বিস্তারিত {isEnrolled && 'দেখুন'}</Link></div>}
               </div>
             );
           })}
