@@ -18,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<User>;
+  signInWithGoogle: () => Promise<void>;
   register: (data: { name: string; email: string; password: string; division?: string; district?: string; phone?: string }) => Promise<{ requiresEmailConfirmation: boolean }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -51,6 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data.user;
   };
 
+  const signInWithGoogle = () => api.signInWithGoogle();
+
   const register = async (formData: { name: string; email: string; password: string; division?: string; district?: string; phone?: string }) => {
     const data = await api.register(formData);
     if (!data.requiresEmailConfirmation) await refreshUser();
@@ -63,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser, setUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signInWithGoogle, register, logout, refreshUser, setUser }}>
       {children}
     </AuthContext.Provider>
   );

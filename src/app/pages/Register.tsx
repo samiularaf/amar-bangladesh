@@ -12,7 +12,7 @@ const DIVISION_LABELS: Record<string, string> = {
 };
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', division: '', district: '', phone: '' });
   const [showPass, setShowPass] = useState(false);
@@ -35,6 +35,17 @@ export default function Register() {
     } catch (err: any) {
       setError(err.message || 'নিবন্ধন ব্যর্থ হয়েছে');
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      setError(err.message || 'Google দিয়ে নিবন্ধন শুরু করা যায়নি');
       setLoading(false);
     }
   };
@@ -95,6 +106,20 @@ export default function Register() {
                 নিবন্ধন সফল হয়েছে। আপনার ইমেইলে পাঠানো ভেরিফিকেশন লিংকে ক্লিক করে তারপর লগইন করুন।
               </div>
             )}
+
+            <button
+              type="button" onClick={handleGoogleSignIn} disabled={loading}
+              className="w-full py-3 rounded-xl border border-gray-200 text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors disabled:opacity-60 mb-5"
+            >
+              <span className="font-bold text-lg" style={{ color: '#4285F4' }}>G</span>
+              Google দিয়ে চালিয়ে যান
+            </button>
+
+            <div className="flex items-center gap-3 mb-5 text-xs text-gray-400">
+              <div className="h-px bg-gray-200 flex-1" />
+              অথবা ইমেইল দিয়ে নিবন্ধন করুন
+              <div className="h-px bg-gray-200 flex-1" />
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

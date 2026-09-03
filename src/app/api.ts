@@ -18,6 +18,13 @@ export const login = async (email: string, password: string) => {
   if (profile.suspended) { await supabase.auth.signOut(); throw new Error('এই অ্যাকাউন্টটি স্থগিত করা হয়েছে। অ্যাডমিনের সাথে যোগাযোগ করুন।'); }
   return { user: mapProfile(profile) };
 };
+export const signInWithGoogle = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}/dashboard` },
+  });
+  fail(error);
+};
 export const register = async (input: { name: string; email: string; password: string; division?: string; district?: string; phone?: string }) => {
   const { data, error } = await supabase.auth.signUp({ email: input.email, password: input.password, options: { data: { name: input.name, division: input.division || '', district: input.district || '', phone: input.phone || '' } } });
   fail(error); return { requiresEmailConfirmation: !data.session };
