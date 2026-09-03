@@ -100,7 +100,7 @@ export default function ProblemDetail() {
   const cat = CATEGORY_CONFIG[problem.category];
   const status = STATUS_CONFIG[problem.status];
   const isUpvoted = (problem.upvotedBy || []).includes(user?.id);
-  const canEdit = user?.role === 'admin' || problem.userId === user?.id;
+  const canEdit = user?.role === 'admin';
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -203,7 +203,7 @@ export default function ProblemDetail() {
               {canEdit && !editing && (
                 <button onClick={() => setEditing(true)} className="flex items-center gap-1 text-xs text-[#006A4E] hover:underline">
                   <Edit2 size={12} />
-                  {user?.role === 'admin' ? 'সম্পাদনা করুন' : 'আপডেট করুন'}
+                  সম্পাদনা করুন
                 </button>
               )}
             </div>
